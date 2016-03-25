@@ -217,7 +217,7 @@ impl Device {
             String::from_utf8_unchecked(buf)
         }
     }
-    
+
     pub fn name(&self) -> String
     {
         self.profile_info(CL_DEVICE_NAME)
@@ -234,7 +234,7 @@ impl Device {
     {
         self.profile_info(CL_DEVICE_TYPE)
     }
-	
+
     pub fn compute_units(&self) -> usize {
 		unsafe {
 			let mut ct: usize = 0;
@@ -412,7 +412,7 @@ unsafe impl Send for CommandQueue {}
 impl CommandQueue
 {
     //synchronous
-    pub fn enqueue_kernel<I: KernelIndex, E: EventList>(&self, k: &Kernel, global: I, local: Option<I>, wait_on: E)
+    pub fn enqueue_kernel<I: KernelIndex, E: EventList>(&self, k: &Kernel, global: I, offset: I, local: Option<I>, wait_on: E)
         -> Event
     {
         unsafe
@@ -423,7 +423,7 @@ impl CommandQueue
                     self.cqueue,
                     k.kernel,
                     KernelIndex::num_dimensions(None::<I>),
-                    ptr::null(),
+                    offset.get_ptr(),
                     global.get_ptr(),
                     match local {
                         Some(ref l) => l.get_ptr() as *const libc::size_t,
@@ -441,7 +441,7 @@ impl CommandQueue
     }
 
     //asynchronous
-    pub fn enqueue_async_kernel<I: KernelIndex, E: EventList>(&self, k: &Kernel, global: I, local: Option<I>, wait_on: E)
+    pub fn enqueue_async_kernel<I: KernelIndex, E: EventList>(&self, k: &Kernel, global: I, offset: I, local: Option<I>, wait_on: E)
         -> Event
     {
         unsafe
@@ -452,7 +452,7 @@ impl CommandQueue
                     self.cqueue,
                     k.kernel,
                     KernelIndex::num_dimensions(None::<I>),
-                    ptr::null(),
+                    offset.get_ptr(),
                     global.get_ptr(),
                     match local {
                         Some(ref l) => l.get_ptr() as *const libc::size_t,
@@ -547,7 +547,7 @@ impl CommandQueue
                                                           event_list_length,
                                                           event_list,
                                                           ptr::null_mut());
-                            
+
                             check(err, "Failed to read buffer");
                         }
                     })
@@ -651,6 +651,11 @@ impl Kernel {
     {
         set_kernel_arg(self, i as cl::cl_uint, x)
     }
+
+    pub fn set_local<T: KernelArg>(&self, i: usize, size: usize, x: &T)
+    {
+        set_local_kernel_arg(self, i as cl::cl_uint, size as libc::size_t * x.get_value().0 )
+    }
 }
 
 pub fn create_kernel(program: &Program, kernel: & str) -> Kernel
@@ -721,6 +726,19 @@ pub fn set_kernel_arg<T: KernelArg>(kernel: & Kernel,
     }
 }
 
+pub fn set_local_kernel_arg(kernel: & Kernel,
+                                    position: cl_uint,
+                                    size: libc::size_t)
+{
+    unsafe
+    {
+        let ret = clSetKernelArg(kernel.kernel, position,
+                                 size,
+                                 ptr::null());
+
+        check(ret, "Failed to set kernel arg!");
+    }
+}
 
 pub struct Event
 {

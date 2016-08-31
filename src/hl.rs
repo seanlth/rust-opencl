@@ -131,7 +131,7 @@ impl Platform {
 // This mutex is used to work around weak OpenCL implementations.
 // On some implementations concurrent calls to clGetPlatformIDs
 // will cause the implantation to return invalid status.
-static mut platforms_mutex: std::sync::StaticMutex = std::sync::MUTEX_INIT;
+//static mut platforms_mutex: std::sync::StaticMutex = std::sync::MUTEX_INIT;
 
 pub fn get_platforms() -> Vec<Platform>
 {
@@ -139,7 +139,7 @@ pub fn get_platforms() -> Vec<Platform>
 
     unsafe
     {
-        let guard = platforms_mutex.lock();
+        //let guard = platforms_mutex.lock();
         let status = clGetPlatformIDs(0,
                                           ptr::null_mut(),
                                           (&mut num_platforms));

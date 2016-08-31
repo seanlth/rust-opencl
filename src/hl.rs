@@ -154,7 +154,7 @@ pub fn get_platforms() -> Vec<Platform>
                                       (&mut num_platforms));
         check(status, "could not get platforms.");
 
-        let _ = guard;
+        //let _ = guard;
 
         ids.iter().map(|id| { Platform { id: *id } }).collect()
     }
